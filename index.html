@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Warrior's Love - Template</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #87ceeb;
+  }
+  #gameContainer {
+    position: relative;
+    width: 2000px; /* horizontal world width, expand per level */
+    height: 500px;
+    background: linear-gradient(to right, #87ceeb, #e0ffff);
+  }
+  #player {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    width: 50px;
+    height: 50px;
+    background: red;
+    border-radius: 10px;
+  }
+  .enemy {
+    position: absolute;
+    bottom: 50px;
+    width: 50px;
+    height: 50px;
+    background: black;
+    border-radius: 10px;
+  }
+  .boss {
+    position: absolute;
+    bottom: 50px;
+    width: 100px;
+    height: 100px;
+    background: purple;
+    border-radius: 10px;
+  }
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px black;
+  }
+</style>
+</head>
+<body>
+
+<div id="score">Points: 0 | Level: 1</div>
+<div id="gameContainer">
+  <div id="player"></div>
+</div>
+
+<audio id="jumpSound" src="jump.mp3"></audio>
+<audio id="hitSound" src="hit.mp3"></audio>
+
+<script>
+const container = document.getElementById('gameContainer');
+const player = document.getElementById('player');
+const scoreDisplay = document.getElementById('score');
+const jumpSound = document.getElementById('jumpSound');
+const hitSound = document.getElementById('hitSound');
+
+let points = 0;
+let level = 1;
+let playerPos = 50;
+let speed = 10;
+
+// Sample levels data (expand to 50 levels)
+const levels = [
+  {enemies: [{x:300},{x:600}], boss:false},
+  {enemies: [{x:400},{x:800},{x:1200}], boss:false},
+  {enemies: [{x:500},{x:900}], boss:true} // example boss in level 3
+];
+
+// Current level index
+let currentLevel = 0;
+
+// Spawn enemies
+function spawnEnemies() {
+  container.querySelectorAll('.enemy, .boss').forEach(e=>e.remove());
+  const data = levels[currentLevel];
+  data.enemies.forEach(pos=>{
+    const e = document.createElement(data.boss?'div':'div');
+    e.className = data.boss?'boss':'enemy';
+    e.style.left = pos.x+'px';
+    container.appendChild(e);
+  });
+}
+
+// Initial spawn
+spawnEnemies();
+
+// Player movement
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight') { playerPos += speed; }
+  if(e.key==='ArrowLeft') { playerPos -= speed; }
+  if(e.key===' ') { jumpSound.play(); } // jump sound
+  if(playerPos<0) playerPos=0;
+  if(playerPos>container.offsetWidth-player.offsetWidth) playerPos=container.offsetWidth-player.offsetWidth;
+  player.style.left = playerPos+'px';
+  checkCollision();
+});
+
+// Collision detection
+function checkCollision() {
+  const enemies = container.querySelectorAll('.enemy, .boss');
+  enemies.forEach(e=>{
+    const eRect = e.getBoundingClientRect();
+    const pRect = player.getBoundingClientRect();
+    if(!(pRect.right < eRect.left || pRect.left > eRect.right || pRect.bottom < eRect.top || pRect.top > eRect.bottom)) {
+      hitSound.play();
+      points = Math.max(0, points-1);
+      scoreDisplay.textContent = `Points: ${points} | Level: ${level}`;
+    }
+  });
+}
+
+// Score & level system
+function nextLevel() {
+  if(currentLevel<levels.length-1){
+    currentLevel++;
+    level++;
+    spawnEnemies();
+    scoreDisplay.textContent = `Points: ${points} | Level: ${level}`;
+  } else {
+    alert('Boss defeated! Game completed!');
+  }
+}
+
+// Example: automatically increase points and go to next level
+setInterval(()=>{
+  points++;
+  scoreDisplay.textContent = `Points: ${points} | Level: ${level}`;
+  if(points%20===0){ nextLevel(); }
+},1000);
+
+</script>
+</body>
+</html>
